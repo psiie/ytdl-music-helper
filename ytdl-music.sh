@@ -73,8 +73,10 @@ BITRATE="64k"
 SKIP_YTDL=NO
 VERBOSE=""
 SKIP_ALBUM_ART=NO # Using "NO" for increased readability in if-statements
+CUSTOM_ALBUM_COVER_OVERLAY_IMAGE=""
 IS_COLLECTION=""
 NO_PRUNE=""
+YTDL_DOWNLOAD_HISTORY="ytdl-download-history.list.txt" # default path when not specified
 
 show_help() {
   cat <<EOF
@@ -96,10 +98,16 @@ Options:
   -sa, --skip-album-art
                      Bypass processing album-art covers (extracting, cropping,
                      injecting)
+  --custom-cover-overlay
+                     Specify an image to overlay on top of album-cover. Expects a
+                     512x512 image with alpha-channel. (default: off)
   --collection       Specifies that the files in the working_dir are not from one
                      single album. Useful for processing collections at a time.
                      Prevents borrowing album-covers from other files.
   --no-prune         Skip the final cleanup phase of files
+  --download-archive Manually specify a custom download-archive list file for yt-dl.
+                     Useful for scripting when said scripts need their own download
+                     tracking. (default: ytdl-download-history.list)
 
 Requirements:
   - yt-dl (or yt-dlp)
@@ -127,6 +135,11 @@ while [[ $# -gt 0 ]]; do
       SKIP_ALBUM_ART=YES
       shift # past argument
       ;;
+    --custom-cover-overlay)
+      CUSTOM_ALBUM_COVER_OVERLAY_IMAGE="$2"
+      shift # past argument
+      shift # past value
+      ;;
     --collection)
       IS_COLLECTION=YES
       shift # past argument
@@ -134,6 +147,11 @@ while [[ $# -gt 0 ]]; do
     --no-prune)
       NO_PRUNE=YES
       shift # past argument
+      ;;
+    --download-archive)
+      YTDL_DOWNLOAD_HISTORY="$2"
+      shift # past argument
+      shift # past value
       ;;
     --help)
       show_help
@@ -325,7 +343,7 @@ download_music() {
     --audio-format opus \
     --add-metadata \
     --embed-thumbnail \
-    --download-archive "ytdl-download-history.list" \
+    --download-archive "$YTDL_DOWNLOAD_HISTORY" \
     --no-playlist \
     --trim-filenames 245 \
     --output "%(artist)s - %(album)s - %(0Dtrack_number,playlist_index)s - %(title)s.%(ext)s" \
@@ -446,6 +464,41 @@ crop_album_cover() {
   # Failure handling
   if [ $? -ne 0 ]; then
     print "  $COLOR_BRIGHT_RED""image-magick failed to crop image""$COLOR_RESET"
+    return 1
+  fi
+}
+
+overlay_custom_cover_overlay() {
+  # overlay_custom_cover_overlay <input>
+  # This function is intended to inline replace and utilizes magick's ability
+  # to do so. Only occurs if option is specified.
+  # 
+  # Arguments
+  #   input   – filename of the input image
+  local input="$1" # $albumart_cropped_filename
+  local output="$input" # intentional inline replace
+
+  # If setting is missing, or if the input file is missing, then return early
+  if [ "$CUSTOM_ALBUM_COVER_OVERLAY_IMAGE" = "" ] || [ ! -f "$input" ]; then
+    print_verbose "  $COLOR_YELLOW""+ Skipping: Overlaying Custom Cover Overlay""$COLOR_RESET"
+    return 0
+  fi
+
+  print "$COLOR_BRIGHT_YELLOW""  Overlaying Custom Cover Overlay""$COLOR_RESET"
+
+  # Note: Geometry isn't needed if all the images are 512x512, but this helps
+  # increases compatibility for potential edgecases
+  magick \
+    "$input" \
+    "$CUSTOM_ALBUM_COVER_OVERLAY_IMAGE" \
+    -gravity Center \
+    -geometry 512x512+0+0 \
+    -composite \
+    "$output"
+
+  # Failure handling
+  if [ $? -ne 0 ]; then
+    print "  $COLOR_BRIGHT_RED""image-magick failed to overlay image""$COLOR_RESET"
     return 1
   fi
 }
@@ -595,6 +648,9 @@ for filename in *.opus *.mp3 *.flac *aac; do
 
   crop_album_cover \
     "$albumart_extracted_filename" \
+    "$albumart_cropped_filename"
+
+  overlay_custom_cover_overlay \
     "$albumart_cropped_filename"
 
   save_universal_cover_fallback \
