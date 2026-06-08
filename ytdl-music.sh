@@ -3,6 +3,7 @@
 
 # todo: remove year metadata; ytdl grabs from upload-date which isn't the release date
 # todo: add flag to clear ytdl-download-history.list
+# todo: rename yt-dlp and _yt-dlp working folder names. They no longer make sense
 
 # +-------------------------------------------------------------------------+ #
 # |                              Documentation                              | #
@@ -92,7 +93,6 @@ How to use:
 
 Options:
   -h,  --help        Show this help and exit
-  -v,  --verbose     Enable verbose mode
   -s,  --skip-ytdl   Skip yt-dl and only process existing files in the working_dir
                      (helpful for stuck files, or processing existing collections)
   -sa, --skip-album-art
@@ -104,10 +104,13 @@ Options:
   --collection       Specifies that the files in the working_dir are not from one
                      single album. Useful for processing collections at a time.
                      Prevents borrowing album-covers from other files.
-  --no-prune         Skip the final cleanup phase of files
   --download-archive Manually specify a custom download-archive list file for yt-dl.
                      Useful for scripting when said scripts need their own download
                      tracking. (default: ytdl-download-history.list)
+
+Debugging Options:
+  -v,  --verbose     Enable verbose mode
+  --no-prune         Skip the final cleanup phase of files
 
 Requirements:
   - yt-dl (or yt-dlp)
