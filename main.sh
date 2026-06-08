@@ -318,6 +318,7 @@ download_music() {
   # Note: ytdl quality selectors don't seem to apply in our configuration
   print "$COLOR_BRIGHT_YELLOW""Step: Running yt-dlp""$COLOR_RESET""\n"
   # todo: swap out for the universal path for yt-dl/p
+  # trim-filenames 245 accounts for the appending of ".ext.part" from the 255 limit
   yt-dlp \
     --format "250/bestaudio[ext=opus]/bestaudio/best" \
     --extract-audio \
@@ -326,6 +327,7 @@ download_music() {
     --embed-thumbnail \
     --download-archive "ytdl-download-history.list" \
     --no-playlist \
+    --trim-filenames 245 \
     --output "%(artist)s - %(album)s - %(0Dtrack_number,playlist_index)s - %(title)s.%(ext)s" \
     $yt_url
 
