@@ -59,8 +59,6 @@ COLOR_BRIGHT_MAGENTA="\033[95m"
 COLOR_BRIGHT_RED="\033[91m"
 COLOR_BRIGHT_GREEN="\033[92m"
 
-WORKING_DIR="$HOME/Downloads/_yt-dlp"
-DOWNLOAD_DIR="$HOME/Downloads/yt-dlp"
 YTDL=$(command -v yt-dlp || command -v youtube-dl)
 error_tracker=()
 
@@ -69,6 +67,8 @@ error_tracker=()
 # +-------------------------------------------------------------------------+ #
 
 # globals related to arg-parsing is kept here for modularity
+WORKING_DIR="$HOME/Downloads/_ytdl-music"
+DOWNLOAD_DIR="$HOME/Downloads/ytdl-music"
 POSITIONAL_ARGS=()
 BITRATE="64k"
 SKIP_YTDL=NO
@@ -95,18 +95,26 @@ Options:
   -h,  --help        Show this help and exit
   -s,  --skip-ytdl   Skip yt-dl and only process existing files in the working_dir
                      (helpful for stuck files, or processing existing collections)
+  --collection       Specifies that the files in the working_dir are not from one
+                     single album. Useful for processing collections at a time.
+                     Prevents borrowing album-covers from other files.
+  -w, --working-dir  Specify a custom working directory for temp files.
+                     (default: "$HOME/Downloads/_ytdl-music")
+  -o, --download-dir Specify a custom download directory for finished files.
+                     (default: "$HOME/Downloads/ytdl-music")
+
+Advanced Optoins:
   -sa, --skip-album-art
                      Bypass processing album-art covers (extracting, cropping,
                      injecting)
   --custom-cover-overlay
                      Specify an image to overlay on top of album-cover. Expects a
                      512x512 image with alpha-channel. (default: off)
-  --collection       Specifies that the files in the working_dir are not from one
-                     single album. Useful for processing collections at a time.
-                     Prevents borrowing album-covers from other files.
   --download-archive Manually specify a custom download-archive list file for yt-dl.
                      Useful for scripting when said scripts need their own download
-                     tracking. (default: ytdl-download-history.list)
+                     tracking. Note: specifying custom working-dir may suffice
+                     as the default download-archive is inside that. (default: 
+                     ytdl-download-history.list)
 
 Debugging Options:
   -v,  --verbose     Enable verbose mode
@@ -146,6 +154,16 @@ while [[ $# -gt 0 ]]; do
     --collection)
       IS_COLLECTION=YES
       shift # past argument
+      ;;
+    -w|--working-dir)
+      WORKING_DIR="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -o|--download-dir)
+      DOWNLOAD_DIR="$2"
+      shift # past argument
+      shift # past value
       ;;
     --no-prune)
       NO_PRUNE=YES
